@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2046
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Arduino", "Arduino", "{FA51E348-E1B5-4105-A8FB-D09DEB37AA6F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{16458A11-E295-44C7-956F-B36BD03C975C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TermDriver", "TermDriver", "{DB728B3A-1414-4A46-B93D-C3F763423CF8}"
+	ProjectSection(SolutionItems) = preProject
+		Arduino\Examples\TermDriver\TD-Hello\TD-Hello.ino = Arduino\Examples\TermDriver\TD-Hello\TD-Hello.ino
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{16458A11-E295-44C7-956F-B36BD03C975C} = {FA51E348-E1B5-4105-A8FB-D09DEB37AA6F}
+		{DB728B3A-1414-4A46-B93D-C3F763423CF8} = {16458A11-E295-44C7-956F-B36BD03C975C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E64DFC0C-A9B4-4C32-BE64-87F5DCF376A4}
+	EndGlobalSection
+EndGlobal
