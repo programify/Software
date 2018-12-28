@@ -10,6 +10,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TermDriver", "TermDriver", "{DB728B3A-1414-4A46-B93D-C3F763423CF8}"
 	ProjectSection(SolutionItems) = preProject
 		Arduino\Examples\TermDriver\TD-Hello\TD-Hello.ino = Arduino\Examples\TermDriver\TD-Hello\TD-Hello.ino
+		Arduino\Examples\TermDriver\TD-Hello\vgalib.cpp = Arduino\Examples\TermDriver\TD-Hello\vgalib.cpp
+		Arduino\Examples\TermDriver\TD-Hello\vgalib.h = Arduino\Examples\TermDriver\TD-Hello\vgalib.h
 	EndProjectSection
 EndProject
 Global

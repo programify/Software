@@ -19,53 +19,12 @@
  */
 
 //*****************************************************************************
-//                                      Control Sequence Introducer (CSI) Codes
-//*****************************************************************************
-/*
- *   Source: https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_sequences
- *
- *   Terminal controls are introduced with "ESC [", followed by a code which 
- *   has an effect on the terminal's display. These are:
- *
- *   Code           Effect
- *   =============  ========================
- *   ESC [ n A      Cursor up
- *   ESC [ n B      Cursor down
- *   ESC [ n C      Cursor forward
- *   ESC [ n D      Cursor back
- *   ESC [ r;c H    Cursor position
- *   ESC [ n J      Erase display
- *   ESC [ n m      Select graphic rendition
- *   ESC [ s        Save cursor position
- *   ESC [ u        Restore cursor position
- *   -------------  ------------------------
- *   ESC [ n h      Set display mode
- *   ESC [ n S      Screen-saver
- *   =============  ========================
- *
- *   The cursor disappears when the screen update frequency is high enough.
- *   This can be simulated by performing a cursor position (to the same place)
- *   in a tight loop. So there must be a time limit within the hardware that
- *   hides the cursor when updating the display.
- */
-
-//*****************************************************************************
-//                                    SGR (Select Graphic Rendition) Parameters
-//*****************************************************************************
-/*
- *   Code Effect         Notes
- *   ==== ============== ====================================
- *   0    Reset          All attributes off.
- *   1    Bright Fg      Foreground high intensity on.
- *   5    Bright Bg      Background high intensity on.
- */
-
-//*****************************************************************************
 //                                                                  Development
 //*****************************************************************************
 /*
  *   25-12-18  Started development.
  *   26-12-18  Added display of character set.
+ *   28-12-18  Modified to use VGA functions in an external library.
  */
 
 //-----------------------------------------------------------------------------
@@ -73,70 +32,24 @@
 //-----------------------------------------------------------------------------
 #include  <Arduino.h>
 
+#include  "vgalib.h"
+
 #pragma GCC diagnostic ignored "-Wwrite-strings"
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  Data Types
-
-typedef   uint8_t             BOOLEAN ;
-typedef   int16_t             BOOL ;
-typedef   uint8_t             BYTE ;
-typedef   uint32_t            DWORD ;
-typedef   uint64_t            QWORD ;
-typedef   int8_t              SBYTE ;
-typedef   int32_t             SDWORD ;
-typedef   int64_t             SQWORD ;
-typedef   int16_t             SWORD ;
-typedef   uint16_t            WORD ;
-
-#define   IN
-#define   OUT
+#pragma GCC diagnostic ignored "-fpermissive"
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - -  Manifest Constants
-
-// FG Colour Codes (Add 10 to get BG code)
-#define   COLOUR_BLACK        30
-#define   COLOUR_RED          31
-#define   COLOUR_GREEN        32
-#define   COLOUR_YELLOW       33
-#define   COLOUR_BLUE         34
-#define   COLOUR_MAGENTA      35
-#define   COLOUR_CYAN         36
-#define   COLOUR_WHITE        37
-
-#define   VGAMODE_80x25       0         // 80x25 landscape mode. Default.
-#define   VGAMODE_128x48      1         // 128x48 landscape mode. Recommended for 19" screens and above.
-#define   VGAMODE_96x64_P     2         // 96x64 portrait mode.
+#define   LIMIT_COLOURCHANGE  9000 // Change colour every 'x' blocks painted.
+#define   MAX_COLOUR          COLOUR_WHITE
+#define   MIN_COLOUR          COLOUR_RED
 
 //-----------------------------------------------------------------------------
 //                                                                   Structures
 //-----------------------------------------------------------------------------
-typedef struct _VGADISPLAY
-{
-     BOOLEAN   bfBoldBg ;
-     BOOLEAN   bfBoldFg ;
-     BOOLEAN   bfVideoOut ;
-     BYTE      bBack ;
-     BYTE      bFore ;
-     BYTE      bMode ;
-     int       iCol ;
-     int       iRow ;
-}
-     VGADISPLAY ;
 
 //-----------------------------------------------------------------------------
 //                                                                    Functions
 //-----------------------------------------------------------------------------
-void      VgaBrightBg         (BOOLEAN bfEnable) ;
-void      VgaBrightFg         (BOOLEAN bfEnable) ;
-void      VgaClearScreen      (void) ;
-void      VgaCommand          (IN char * cpOption, char cCommand) ;
-void      VgaCursorPos        (int iCol, int iRow) ;
-void      VgaCursorShow       (BOOLEAN bfShow) ;
-void      VgaInit             (IN VGADISPLAY * pvga) ;
-void      VgaMode             (BYTE bMode) ;
-void      VgaSetColour        (BYTE bFore, BYTE bBack) ;
-void      VgaShowCharSet      (int iCol, int iRow) ;
-void      VgaShowColours      (int iCol, int iRow) ;
+void      UpdateBlocks   (void) ;
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  Global Functions
 
@@ -146,6 +59,9 @@ void      VgaShowColours      (int iCol, int iRow) ;
 char      gszMonitor [120] ;
 
 int       gaiAve [6] ;
+
+int       giColour ;               // Current colour for random blocks.
+int       giCount ;                // Number of blocks painted with current colour.
 
 long      galSum [6] ;
 
@@ -159,6 +75,7 @@ long      glSamples ;
 VGADISPLAY     g_vga ;
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  Literals
+BYTE      gabBlocks [] = { 0xDB, 0xB0, 0xB1, 0xB2, 0xDB, 0xDB } ;
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - Externals
 
@@ -168,6 +85,9 @@ VGADISPLAY     g_vga ;
 //-----------------------------------------------------------------------------
 void setup (void)
 {
+// Init globals
+     giColour = MIN_COLOUR ;
+     randomSeed (0) ;
 // Init system I/O
      Serial.begin (115200) ;
 // Show screen heading
@@ -227,240 +147,46 @@ void loop (void)
           iRow ++ ;
           if (iRow > 2)
                iRow = 0 ;
-     // Moderate speed of display and hide the cursor
+     // Update random segment
+          UpdateBlocks () ;
+     // Further moderate speed of display
           //delay (100) ;
+     // Hide cursor if required delay is relatively long
           //for (iCount = 0 ; iCount < 50 ; iCount ++)
                //VgaCursorPos (13, 9 + iIndex) ;
      }
 }
 
 //-----------------------------------------------------------------------------
-//                                                                      VgaInit
+//                                                                 UpdateBlocks
 //-----------------------------------------------------------------------------
-void VgaInit (IN VGADISPLAY * pvga)
+void UpdateBlocks (void)
 {
-// Initialize VGA data structure
-     memset ((BYTE *) & pvga, 0x00, sizeof (VGADISPLAY)) ;
-     g_vga.bMode = VGAMODE_80x25 ;
+     BYTE      abChar [2] ;
+     int       iCol ;
+     int       iIndex ;
+     int       iRow ;
 
-     VgaClearScreen () ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                               VgaClearScreen
-//-----------------------------------------------------------------------------
-void VgaClearScreen (void)
-{
-     char      szCSI [8] ;
-
-     sprintf (szCSI, "%c[2J", 0x1B) ;
-     Serial.print (szCSI) ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                                 VgaCursorPos
-//-----------------------------------------------------------------------------
-void VgaCursorPos (int iCol, int iRow)
-{
-     char      szCSI [12] ;
-
-     sprintf (szCSI, "%c[%d;%dH", 0x1B, iRow, iCol) ;
-     Serial.print (szCSI) ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                                 VgaSetColour
-//-----------------------------------------------------------------------------
-void VgaSetColour (BYTE bFore, BYTE bBack)
-{
-     char      szCSI [12] ;
-
-     g_vga.bBack = bBack ;
-     g_vga.bFore = bFore ;
-
-     sprintf (szCSI, "%d;%d", bFore, bBack + 10) ;
-     VgaCommand (szCSI, 'm') ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                                VgaCursorShow
-//-----------------------------------------------------------------------------
-void VgaCursorShow (BOOLEAN bfShow)
-{
-     BYTE      bShow ;
-     char      szCSI [8] ;
-
-     if (bfShow)
-          sprintf (szCSI, "%c[%c", 0x1B, 5) ;
-     else
-          sprintf (szCSI, "%c[l", 0x1B) ;
-
-     Serial.print (szCSI) ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                                  VgaBrightBg
-//-----------------------------------------------------------------------------
-void VgaBrightBg (BOOLEAN bfEnable)
-{
-// Save new bold state
-     g_vga.bfBoldBg = bfEnable ;
-// Use SGR command to set increased intensity (or reset attributes)
-     if (bfEnable)
-          VgaCommand ("5", 'm') ;
-     else
-          VgaCommand ("0", 'm') ;
-// Restore colours lost to reset
-     if (! bfEnable)
-          VgaSetColour (g_vga.bFore, g_vga.bBack) ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                                  VgaBrightFg
-//-----------------------------------------------------------------------------
-void VgaBrightFg (BOOLEAN bfEnable)
-{
-// Save new bold state
-     g_vga.bfBoldFg = bfEnable ;
-// Use SGR command to set increased intensity (or reset attributes)
-     if (bfEnable)
-          VgaCommand ("1", 'm') ;
-     else
-          VgaCommand ("0", 'm') ;
-// Restore colours lost to reset
-     if (! bfEnable)
-          VgaSetColour (g_vga.bFore, g_vga.bBack) ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                                   VgaCommand
-//-----------------------------------------------------------------------------
-void VgaCommand (IN char * cpOption, char cCommand)
-{
-     char      szCSI [8] ;
-
-     sprintf (szCSI, "%c[", 0x1B) ;
-     Serial.print (szCSI) ;
-     if (cpOption)
-          Serial.print (cpOption) ;
-     Serial.print ((char) cCommand) ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                                      VgaMode
-//-----------------------------------------------------------------------------
-void VgaMode (BYTE bMode)
-{
-     char      szCSI [8] ;
-
-     g_vga.bMode = bMode ;
-
-     sprintf (szCSI, "%c[", 0x1B) ;
-     Serial.print (szCSI) ;
-     Serial.print (bMode) ;
-     Serial.print ("h") ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                                  VgaVideoOut
-//-----------------------------------------------------------------------------
-void VgaVideoOut (BOOLEAN bfVideoOut)
-{
-     char      szCSI [8] ;
-
-     g_vga.bfVideoOut = bfVideoOut ;
-
-     sprintf (szCSI, "%c[", 0x1B) ;
-     Serial.print (szCSI) ;
-     if (bfVideoOut)
-          Serial.print ((BYTE) 255) ;
-     else
-          Serial.print ((BYTE) 0) ;
-     Serial.print ("S") ;
-}
-
-//-----------------------------------------------------------------------------
-//                                                               VgaShowCharSet
-//-----------------------------------------------------------------------------
-void VgaShowCharSet (int iCol, int iRow)
-{
-     char      szString [8] ;
-     int       iCode ;
-     int       iX ;
-     int       iY ;
-
-// Display column headings
-     VgaCursorPos (iCol + 3, iRow) ;
-     VgaSetColour (COLOUR_GREEN, COLOUR_BLACK) ;
-     VgaBrightFg (false) ;
-     for (iCode = 0x00 ; iCode < 0x100 ; iCode += 0x10)
+// Init
+     abChar [1] = 0x00 ;
+// Generate X/Y offsets for lower half of screen (128x24)
+     iCol = random (2, 128) ;
+     iRow = random (25, 49) ;
+// Generate character to display
+     iIndex = random (0, 5) ;
+     abChar [0] = gabBlocks [iIndex] ;
+// Update display
+     VgaSetColour (giColour, COLOUR_BLACK) ;
+     VgaCursorPos (iCol, iRow) ;
+     Serial.print ((char *) & abChar) ;
+// Colour selector
+     giCount ++ ;
+     if (giCount >= LIMIT_COLOURCHANGE)
      {
-          sprintf (szString, "%02X ", iCode) ;
-          Serial.print (szString) ;
-     }
-// Display row headings
-     for (iCode = 0 ; iCode < 0x10 ; iCode ++)
-     {
-          VgaCursorPos (iCol, iRow + iCode + 1) ;
-          sprintf (szString, "+%1X ", iCode) ;
-          Serial.print (szString) ;
-     }
-// Display character set
-     VgaBrightFg (true) ;
-     iX = iCol + 4 ;
-     iY = iRow + 1 ;
-     for (iCode = 0 ; iCode < 0x100 ; iCode ++)
-     {
-     // Ignore the escape character
-          if (iCode != 0x1B)
-          {
-          // Display character
-               VgaCursorPos (iX, iY) ;
-               VgaSetColour (COLOUR_GREEN, COLOUR_BLACK) ;
-               sprintf (szString, "%c", (char) iCode) ;
-               Serial.print (szString) ;
-          }
-     // Manage where to place next character on display
-          iY ++ ;
-          if (iY > iRow + 16)
-          {
-               iY  = iRow + 1 ;
-               iX += 3 ;
-          }
-     }
-}
-
-//-----------------------------------------------------------------------------
-//                                                               VgaShowColours
-//-----------------------------------------------------------------------------
-void VgaShowColours (int iCol, int iRow)
-{
-     char      szString [8] ;
-     int       iBack ;
-     int       iCode ;
-     int       iFore ;
-
-// Display column headings
-     for (iCode = 0 ; iCode < 16 ; iCode ++)
-     {
-          if (iCode < 8)
-          {
-               iBack = iCode + 40 ;
-               iFore = COLOUR_WHITE ;
-               VgaBrightBg (false) ;
-               VgaBrightFg (true) ;
-          }
-          else
-          {
-               iBack = iCode + 32 ;   /// 62 ;
-               iFore = COLOUR_BLACK ;
-               VgaBrightFg (false) ;
-               VgaBrightBg (true) ;
-          }
-
-          VgaCursorPos (iCol, iRow + iCode) ;
-          VgaSetColour (iFore, iBack - 10) ;
-          sprintf (szString, " %3d ", iBack) ;
-          Serial.print (szString) ;
+          randomSeed (0) ;
+          giCount = 0 ;
+          giColour ++ ;
+          if (giColour > MAX_COLOUR)
+               giColour = MIN_COLOUR ;
      }
 }
