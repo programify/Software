@@ -5,13 +5,42 @@ VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Arduino", "Arduino", "{FA51E348-E1B5-4105-A8FB-D09DEB37AA6F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{16458A11-E295-44C7-956F-B36BD03C975C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{16458A11-E295-44C7-956F-B36BD03C975C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TermDriver", "TermDriver", "{DB728B3A-1414-4A46-B93D-C3F763423CF8}"
 	ProjectSection(SolutionItems) = preProject
-		Arduino\Examples\TermDriver\TD-Hello\TD-Hello.ino = Arduino\Examples\TermDriver\TD-Hello\TD-Hello.ino
-		Arduino\Examples\TermDriver\TD-Hello\vgalib.cpp = Arduino\Examples\TermDriver\TD-Hello\vgalib.cpp
-		Arduino\Examples\TermDriver\TD-Hello\vgalib.h = Arduino\Examples\TermDriver\TD-Hello\vgalib.h
+		Arduino\Projects\Video\TermDriver\TD-Hello\TD-Hello.ino = Arduino\Projects\Video\TermDriver\TD-Hello\TD-Hello.ino
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{03918E27-6C0A-479F-B015-DD8B80B3BE61}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{809098EE-FF50-4484-9A73-4BC892E8455C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Video", "Video", "{27FB2CE1-08E2-4014-877F-9546B0F2CAE8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vgalib", "vgalib", "{AF74D52C-D7CC-4C1D-88C9-5413B7D99D5D}"
+	ProjectSection(SolutionItems) = preProject
+		Arduino\Libraries\Video\vgalib\vgalib.cpp = Arduino\Libraries\Video\vgalib\vgalib.cpp
+		Arduino\Libraries\Video\vgalib\vgalib.h = Arduino\Libraries\Video\vgalib\vgalib.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OV7670", "OV7670", "{2D92932C-FE5C-44EA-93BD-51366D8501ED}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AsciiCamera", "AsciiCamera", "{C0684080-16DE-40B6-8FD7-9812BDA4E072}"
+	ProjectSection(SolutionItems) = preProject
+		Arduino\Projects\Video\OV7670\Software\AsciiCamera\AsciiCamera.h = Arduino\Projects\Video\OV7670\Software\AsciiCamera\AsciiCamera.h
+		Arduino\Projects\Video\OV7670\Software\AsciiCamera\AsciiCamera.ino = Arduino\Projects\Video\OV7670\Software\AsciiCamera\AsciiCamera.ino
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CAM-1", "CAM-1", "{851BDEBB-A0D8-4803-95FA-93E14A5A51B5}"
+	ProjectSection(SolutionItems) = preProject
+		Arduino\Projects\Video\OV7670\Software\CAM-1\CAM-1.ino = Arduino\Projects\Video\OV7670\Software\CAM-1\CAM-1.ino
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OV7670", "OV7670", "{3F38CF04-6B57-4290-B697-4A958BD85485}"
+	ProjectSection(SolutionItems) = preProject
+		Arduino\Projects\Video\OV7670\Software\AsciiCamera\libs\ov7670.cpp = Arduino\Projects\Video\OV7670\Software\AsciiCamera\libs\ov7670.cpp
+		Arduino\Projects\Video\OV7670\Software\AsciiCamera\libs\ov7670.h = Arduino\Projects\Video\OV7670\Software\AsciiCamera\libs\ov7670.h
 	EndProjectSection
 EndProject
 Global
@@ -21,6 +50,14 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{16458A11-E295-44C7-956F-B36BD03C975C} = {FA51E348-E1B5-4105-A8FB-D09DEB37AA6F}
 		{DB728B3A-1414-4A46-B93D-C3F763423CF8} = {16458A11-E295-44C7-956F-B36BD03C975C}
+		{03918E27-6C0A-479F-B015-DD8B80B3BE61} = {FA51E348-E1B5-4105-A8FB-D09DEB37AA6F}
+		{809098EE-FF50-4484-9A73-4BC892E8455C} = {FA51E348-E1B5-4105-A8FB-D09DEB37AA6F}
+		{27FB2CE1-08E2-4014-877F-9546B0F2CAE8} = {03918E27-6C0A-479F-B015-DD8B80B3BE61}
+		{AF74D52C-D7CC-4C1D-88C9-5413B7D99D5D} = {27FB2CE1-08E2-4014-877F-9546B0F2CAE8}
+		{2D92932C-FE5C-44EA-93BD-51366D8501ED} = {16458A11-E295-44C7-956F-B36BD03C975C}
+		{C0684080-16DE-40B6-8FD7-9812BDA4E072} = {2D92932C-FE5C-44EA-93BD-51366D8501ED}
+		{851BDEBB-A0D8-4803-95FA-93E14A5A51B5} = {2D92932C-FE5C-44EA-93BD-51366D8501ED}
+		{3F38CF04-6B57-4290-B697-4A958BD85485} = {27FB2CE1-08E2-4014-877F-9546B0F2CAE8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E64DFC0C-A9B4-4C32-BE64-87F5DCF376A4}

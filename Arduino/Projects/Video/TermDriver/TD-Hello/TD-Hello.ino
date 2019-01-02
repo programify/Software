@@ -1,6 +1,8 @@
 //*****************************************************************************
 //
-//   Programify Ltd
+//   (c) programify.com
+//   Open Source Project
+//
 //   TermDriver Hello World                                        TD-Hello.ino
 //
 //*****************************************************************************
@@ -32,7 +34,7 @@
 //-----------------------------------------------------------------------------
 #include  <Arduino.h>
 
-#include  "vgalib.h"
+#include  "libs\vgalib.h"
 
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 #pragma GCC diagnostic ignored "-fpermissive"
