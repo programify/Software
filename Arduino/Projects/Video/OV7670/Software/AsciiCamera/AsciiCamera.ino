@@ -39,6 +39,13 @@
 #define   PIN_PCLK            32        // 
 #define   PIN_HREF            31        // Horizontal timing.
 
+#define   SCALE_NORMAL        0x01
+#define   SCALE_REVERSE       0x02
+
+#define   STYLE_BLOCKS        0x01
+#define   STYLE_CHARMAX72     0x02
+#define   STYLE_CHARMIN10     0x03
+
 //-----------------------------------------------------------------------------
 //                                                                   Structures
 //-----------------------------------------------------------------------------
@@ -46,6 +53,7 @@
 //-----------------------------------------------------------------------------
 //                                                                    Functions
 //-----------------------------------------------------------------------------
+BOOLEAN   BrightScale    (BYTE bStyle, BYTE bDirection) ;
 void      CameraInit     (int iPinXClock) ;
 void      CameraSetRegs  (const struct regval_list reglist[]) ;
 void      CaptureImage   (WORD wg, WORD hg) ;
@@ -84,17 +92,13 @@ VGADISPLAY     g_vga ;
 //-----------------------------------------------------------------------------
 void setup (void)
 {
-// Global inits
-     strcpy (gacScale, " .:-=+*#%@") ;
-     //strcpy (gacScale, "@%#*+=-:. ") ;
-     //strcpy (gacScale, "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ") ;
-     gbScaleMax  = strlen (gacScale) ;
-     gbDownScale = 256 / gbScaleMax ;
-     gbScaleMax -- ;
-
      Serial.begin (115200) ;
+     while (! Serial) ;
+
      Wire.begin () ;
 
+// Global inits
+     BrightScale (STYLE_CHARMIN10, SCALE_NORMAL) ;
 // Show screen heading
      VgaInit (& g_vga) ;
      VgaMode (VGAMODE_128x48) ;
@@ -330,3 +334,61 @@ void CameraSetRegs (const struct regval_list reglist [])
           while (regpaar.reg_num != 0xFF) ;
 }
 
+//-----------------------------------------------------------------------------
+//                                                                  BrightScale
+//-----------------------------------------------------------------------------
+BOOLEAN BrightScale (BYTE bStyle, BYTE bDirection)
+{
+     switch (bDirection)
+     {
+     // Bright levels map to optically dense characters
+          case SCALE_NORMAL :
+               switch (bStyle)
+               {
+                    case STYLE_BLOCKS :
+                         gacScale [0] = 0x20 ;
+                         gacScale [1] = 0xB0 ;
+                         gacScale [2] = 0xB1 ;
+                         gacScale [3] = 0xB2 ;
+                         gacScale [4] = 0xDB ;
+                         gacScale [5] = 0x00 ;
+                         break ;
+
+                    case STYLE_CHARMAX72 : strcpy (gacScale, " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$") ; break ;
+                    case STYLE_CHARMIN10 : strcpy (gacScale, " .:-=+*#%@") ; break ;
+
+                    default :
+                         return false ;
+               }
+               break ;
+
+     // Dark levels map to optically dense characters
+          case SCALE_REVERSE :
+               switch (bStyle)
+               {
+                    case STYLE_BLOCKS :
+                         gacScale [0] = 0xDB ;
+                         gacScale [1] = 0xB2 ;
+                         gacScale [2] = 0xB1 ;
+                         gacScale [3] = 0xB0 ;
+                         gacScale [4] = 0x20 ;
+                         gacScale [5] = 0x00 ;
+                         break ;
+
+                    case STYLE_CHARMAX72 : strcpy (gacScale, "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ") ; break ;
+                    case STYLE_CHARMIN10 : strcpy (gacScale, "@%#*+=-:. ") ; break ;
+
+                    default :
+                         return false ;
+               }
+               break ;
+
+          default :
+               return false ;
+     }
+// Precalculate translation factors
+     gbScaleMax  = strlen (gacScale) ;
+     gbDownScale = 256 / gbScaleMax ;
+     gbScaleMax -- ;
+     return true ;
+}
